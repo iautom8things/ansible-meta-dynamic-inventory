@@ -1,0 +1,4 @@
+db_host: db.example.com
+db_user: admin
+db_pass: use_ansible_vault
+db_name: bananas

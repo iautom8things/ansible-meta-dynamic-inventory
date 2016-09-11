@@ -1,0 +1,14 @@
+---
+- name: Setup Webservers
+  hosts: web_{{ env_name }}
+  become: yes
+  vars_files:
+    - group_vars/db_{{ env_name }}.yml
+
+  roles:
+    - web
+
+  tasks:
+    - wait_for:
+        host: "{{ web_host }}"
+        port: "{{ web_port }}"

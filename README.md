@@ -1,6 +1,23 @@
 # ansible-meta-dynamic-inventory
 
-This script takes, as input, the output of a dynamic inventory script and reads in another file, called a Groupsfile, that allows dynamically creating new groups using any of Ansible's Pattern set notations, and then outputs an updated  version of the dynamic inventory that it received.
+This script takes, as input, the output of a dynamic inventory script and reads in another file, called a Groupsfile, that allows the creation of new groups using any of Ansible's Pattern set notations, and then outputs an updated version of the dynamic inventory that it received.
+
+#Who does this help?
+Anyone that extensively uses Ansible Patterns.
+
+#What does this give you?
+
+1. The ability to effectively alias your patterns, by creating new groups from your patterns.
+2. The ability to define _group_vars_ for your patterned groups.
+3. A single source for defining your patterned groups.
+4. More reusable playbooks.
+
+#Dependancies
+
+- Python (developed against 2.7.12)
+- Parsley v1.3 [[link]](https://pypi.python.org/pypi/Parsley)
+
+#Introduction
 
 Ansible has a concept of _Inventory_, this is your listing/groupings of all of the machines in your infrastructure. Ansible allows for two types of inventories: _static_ and _dynamic_.
 
@@ -22,7 +39,7 @@ web
 db
 ```
 
-This static inventory file describes two groups (web,db) with two hosts each, and a third group (aws_us_east) that is the union of web and db.  Static inventory works great if you have very few machines that never change, and it becomes virtually useless with the more hosts you have or the more _dynamic_ your inventory is.
+This static inventory file describes two groups (`web`,`db`) with two hosts each, and a third group (`aws_us_east`) that is the union of web and db.  Static inventory works great if you have very few machines that never change, and it becomes virtually useless with the more hosts you have or the more _dynamic_ your inventory is.
 
 ### Dynamic inventory to the rescue!
 
@@ -30,7 +47,26 @@ Dynamic inventory is an executable script that inspects your infrastructure and 
 
 ### Ansible Patterns
 
-Ansible also has this great feature that allows you to use set functions like union, intersection and difference on your host groups, called Patterns.  This allows for you to home in on _just the right_ group of hosts to operate on.
+Ansible also has this great feature that allows you to use set functions like union, intersection and difference on your host groups, called Patterns [[link]](http://docs.ansible.com/ansible/intro_patterns.html).  This allows for you to home in on _just the right_ group of hosts to operate on.
+
+####Examples:
+- Union *(All API and WEB nodes)*
+
+		tag_Product_api:tag_Product_web
+
+- Intersection *(Production API nodes)*
+
+		tag_Product_api:&tag_Env_prod
+
+- Difference *(Non-API nodes)*
+
+		tag_Product_api:!tag_Env_prod
+
+- Slicing *(The first two nodes with tag Product=api)*
+
+		tag_Product_api[0:2]
+
+*See the Ansible documentation for a complete list of possible patterns.*
 
 ### The Rub
 
@@ -52,7 +88,7 @@ Or they can be used as the host specifier for a play:
     - SomeService
 ```
 
-This means that you _cannot_ use patterns in a static inventory file.  So the following does not work:
+This means that you _cannot_ use patterns in a static inventory file.  So the following **does not work**:
 
 ```
 [web]
@@ -67,5 +103,5 @@ This means that you _cannot_ use patterns in a static inventory file.  So the fo
 [web_prod:children]
 web:&prod
 ```
-This static inventory file attempts to create a `web_prod` group that only consists of machines in `web` && `prod`.
+This static inventory file attempts to create a `web_prod` group that only consists of machines in _both_ `web` && `prod`.
 

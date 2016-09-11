@@ -1,0 +1,20 @@
+[db_qa]
+tag_Service_db:&tag_Env_qa
+
+[db_prod]
+tag_Service_db:&tag_Env_prod
+
+[web_qa]
+tag_Serice_qa:&tag_Env_qa
+
+[web_prod]
+tag_Service_web:&tag_Env_prod
+
+[web_prod_blue]
+web_prod:&tag_Color_blue
+
+[web_prod_green]
+web_prod:&tag_Color_green
+
+[tag_Env_prod:vars]
+ansible_ssh_common_args=-o ProxyCommand="ssh -W %h:%p -q user@bastion.example.com"
