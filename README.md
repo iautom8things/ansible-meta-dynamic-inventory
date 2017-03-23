@@ -49,7 +49,7 @@ Dynamic inventory is an executable script that inspects your infrastructure and 
 
 Ansible also has this great feature that allows you to use set functions like union, intersection and difference on your host groups, called Patterns [[link]](http://docs.ansible.com/ansible/intro_patterns.html).  This allows for you to home in on _just the right_ group of hosts to operate on.
 
-####Examples:
+#### Examples:
 - Union *(All API and WEB nodes)*
 
 		tag_Product_api:tag_Product_web
