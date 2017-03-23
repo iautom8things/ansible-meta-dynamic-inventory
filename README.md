@@ -2,22 +2,22 @@
 
 This script takes, as input, the output of a dynamic inventory script and reads in another file, called a Groupsfile, that allows the creation of new groups using any of Ansible's Pattern set notations, and then outputs an updated version of the dynamic inventory that it received.
 
-#Who does this help?
+## Who does this help?
 Anyone that extensively uses Ansible Patterns.
 
-#What does this give you?
+## What does this give you?
 
 1. The ability to effectively alias your patterns, by creating new groups from your patterns.
 2. The ability to define _group_vars_ for your patterned groups.
 3. A single source for defining your patterned groups.
 4. More reusable playbooks.
 
-#Dependancies
+## Dependancies
 
 - Python (developed against 2.7.12)
 - Parsley v1.3 [[link]](https://pypi.python.org/pypi/Parsley)
 
-#Introduction
+## Introduction
 
 Ansible has a concept of _Inventory_, this is your listing/groupings of all of the machines in your infrastructure. Ansible allows for two types of inventories: _static_ and _dynamic_.
 
