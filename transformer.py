@@ -59,20 +59,24 @@ op_intersection = ':&' -> 'intersection'
 op_difference = ':!' -> 'difference'
 operation = op_intersection | op_difference | op_union
 
-group_name = '[' ansible_name_partial:g ']' -> g
+group_name = '[' ansible_name_partial:g ']' (ws comment)? -> g
 grouping_expression = ansible_name:left ( (operation:op grouping_expression:exp -> (op,exp))?:rest -> (left, rest)
                                                                               | -> (left,None))
-group = ws group_name:name ws (grouping_expression:exp ws -> exp)*:expressions -> ('group',(name,expressions))
+group = ws group_name:name ws? comments? (grouping_expression:exp (ws comments)? -> exp)*:expressions -> ('group',(name,expressions))
 
 allowed_groupvar_value_chars = letterOrDigit | punctuation | ' ' | '\t'
+
+rest_of_line = <('\\\n' | (~'\n' anything))*>
+comment = '#' rest_of_line -> None
+comments = (comment ws)*
 
 groupvar_value = <allowed_groupvar_value_chars*>:val -> val
 groupvar_name = ansible_name_partial
 groupvar_expression = groupvar_name:name '=' groupvar_value:val -> (name,val)
-group_var_head = '[' ansible_name_partial:g ':vars]' -> g
-groupvars = group_var_head:gname ws (groupvar_expression:var ws? -> var)*:vars -> ('vars',{'name':gname,'vars':vars})
+group_var_head = '[' ansible_name_partial:g ':vars]' (ws comment)? -> g
+groupvars = group_var_head:gname ws ( comments? groupvar_expression:var (ws comments)? -> var)*:vars -> ('vars',{'name':gname,'vars':vars})
 
-group_file = (group|groupvars)+:items -> {'groups':[x[1] for x in items if x[0] == 'group'], 'vars':[x[1] for x in items if x[0] == 'vars']}
+group_file = ws? comments (group|groupvars)+:items -> {'groups':[x[1] for x in items if x is not None and x[0] == 'group'], 'vars':[x[1] for x in items if x is not None and x[0] == 'vars']}
 """,{})
 
 def fetch_matching_groups ( group_expr ):
