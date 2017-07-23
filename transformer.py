@@ -15,15 +15,19 @@ Takes a single argument
 # of the MIT license.  See the LICENSE file for details.
 
 from __future__ import print_function
-import parsley, fnmatch, json, argparse, sys
+import parsley
+import fnmatch
+import json
+import argparse
+import sys
 
 inventory = json.loads(sys.stdin.read())
-cleaned_inventory = { }
+cleaned_inventory = {}
 if '_meta' in inventory:
     cleaned_inventory['_meta'] = inventory['_meta']
-for k,v in inventory.items():
+for k, v in inventory.items():
     if type(v) == list:
-        cleaned_inventory[k] = { 'hosts':v, 'vars':{} }
+        cleaned_inventory[k] = {'hosts': v, 'vars': {}}
     else:
         cleaned_inventory[k] = v
 
@@ -77,49 +81,53 @@ group_var_head = '[' ansible_name_partial:g ':vars]' (ws comment)? -> g
 groupvars = group_var_head:gname ws ( comments? groupvar_expression:var (ws comments)? -> var)*:vars -> ('vars',{'name':gname,'vars':vars})
 
 group_file = ws? comments (group|groupvars)+:items -> {'groups':[x[1] for x in items if x is not None and x[0] == 'group'], 'vars':[x[1] for x in items if x is not None and x[0] == 'vars']}
-""",{})
+""", {})
 
-def fetch_matching_groups ( group_expr ):
+
+def fetch_matching_groups(group_expr):
     sublists, vars = [], {}
     if group_expr.startswith('~'):
-        matches = lambda pattern, test: re.match(pattern[1:],test)
+        def matches(pattern, test): return re.match(pattern[1:], test)
     else:
-        matches = lambda pattern, test: fnmatch.fnmatch(test,pattern)
-    for k,v in cleaned_inventory.items():
-        if matches(group_expr,k):
+        def matches(pattern, test): return fnmatch.fnmatch(test, pattern)
+    for k, v in cleaned_inventory.items():
+        if matches(group_expr, k):
             sublists.append(v['hosts'])
             vars.update(v['vars'])
-    flattened_list = [ item for sublist in sublists for item in sublist ]
-    return {'hosts':set(flattened_list), 'vars':vars}
+    flattened_list = [item for sublist in sublists for item in sublist]
+    return {'hosts': set(flattened_list), 'vars': vars}
 
-def process_grouping ( grouping ):
+
+def process_grouping(grouping):
     lhs, rest = grouping
     if rest is None:
         return lhs
-    (operation,(rhs,rest)) = rest
-    
-    rhs = fetch_matching_groups(rhs)
-    new_lhs_hosts = getattr(lhs['hosts'],operation)(rhs['hosts'])
-    new_lhs = {'hosts':new_lhs_hosts,'vars':lhs['vars']}
+    (operation, (rhs, rest)) = rest
 
-    if operation in {'union','intersection'}:
+    rhs = fetch_matching_groups(rhs)
+    new_lhs_hosts = getattr(lhs['hosts'], operation)(rhs['hosts'])
+    new_lhs = {'hosts': new_lhs_hosts, 'vars': lhs['vars']}
+
+    if operation in {'union', 'intersection'}:
         new_lhs['vars'].update(rhs['vars'])
 
-    new_grouping = (new_lhs,rest)
+    new_grouping = (new_lhs, rest)
     return process_grouping(new_grouping)
+
 
 def main(groupingsfile_path):
     parsed_groupsfile = None
 
-    with open(groupingsfile_path,'r') as f:
-        parsed_groupsfile= grammer(f.read()).group_file()
+    with open(groupingsfile_path, 'r') as f:
+        parsed_groupsfile = grammer(f.read()).group_file()
     for group in parsed_groupsfile['vars']:
         if group['name'] not in cleaned_inventory:
-            cleaned_inventory[group['name']] = { 'hosts':[], 'vars':{} }
-        for k,v in group['vars']:
+            cleaned_inventory[group['name']] = {'hosts': [], 'vars': {}}
+        for k, v in group['vars']:
             cleaned_inventory[group['name']]['vars'][k] = v
     for new_group_name, groupings in parsed_groupsfile['groups']:
-        result = cleaned_inventory.get(new_group_name,{'hosts':[],'vars':{}})
+        result = cleaned_inventory.get(
+            new_group_name, {'hosts': [], 'vars': {}})
         result['hosts'] = set(result['hosts'])
         if new_group_name == '_meta':
             raise Exception("group name _meta not allowed")
@@ -132,9 +140,11 @@ def main(groupingsfile_path):
         cleaned_inventory[new_group_name] = result
     print(json.dumps(cleaned_inventory))
 
+
 if __name__ == '__main__':
-    arg_parser = argparse.ArgumentParser(description="Dynamic Inventory transformer")
-    arg_parser.add_argument('Groupingsfile_path', help='the path to your Groupingsfile')
+    arg_parser = argparse.ArgumentParser(
+        description="Dynamic Inventory transformer")
+    arg_parser.add_argument('Groupingsfile_path',
+                            help='the path to your Groupingsfile')
     args = arg_parser.parse_args()
     main(args.Groupingsfile_path)
-
